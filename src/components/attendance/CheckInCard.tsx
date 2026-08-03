@@ -1,0 +1,71 @@
+import { useEffect, useState } from 'react'
+import { Clock, LogIn, LogOut } from 'lucide-react'
+import { Card } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
+import { StatusBadge } from '@/components/ui/Badge'
+import { useDataStore } from '@/store/useDataStore'
+import { formatTime } from '@/lib/utils'
+
+export function CheckInCard({ employeeId }: { employeeId: string }) {
+  const [now, setNow] = useState(new Date())
+  const record = useDataStore((s) => s.getTodayRecord(employeeId))
+  const checkIn = useDataStore((s) => s.checkIn)
+  const checkOut = useDataStore((s) => s.checkOut)
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  const hasCheckedIn = !!record?.checkIn
+  const hasCheckedOut = !!record?.checkOut
+
+  return (
+    <Card className="relative overflow-hidden p-6">
+      <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-gradient-to-br from-brand-500/10 to-accent-400/10 blur-2xl" />
+      <div className="relative flex flex-col items-center text-center">
+        <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Current time</p>
+        <p className="mt-1 font-mono text-4xl font-bold tabular-nums text-slate-900 dark:text-white">
+          {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+        </p>
+
+        <div className="mt-5 flex items-center gap-2">
+          {record ? <StatusBadge status={record.status} /> : <StatusBadge status="absent" />}
+        </div>
+
+        <div className="mt-6 grid w-full grid-cols-2 gap-4 rounded-xl bg-slate-50 p-4 text-left dark:bg-slate-800/50">
+          <div>
+            <p className="flex items-center gap-1.5 text-xs text-slate-400">
+              <LogIn className="h-3.5 w-3.5" /> Check-in
+            </p>
+            <p className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100">{formatTime(record?.checkIn ?? null)}</p>
+          </div>
+          <div>
+            <p className="flex items-center gap-1.5 text-xs text-slate-400">
+              <LogOut className="h-3.5 w-3.5" /> Check-out
+            </p>
+            <p className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100">{formatTime(record?.checkOut ?? null)}</p>
+          </div>
+        </div>
+
+        <div className="mt-6 w-full">
+          {!hasCheckedIn && (
+            <Button className="w-full" size="lg" onClick={() => checkIn(employeeId)}>
+              <LogIn className="h-4 w-4" /> Check In
+            </Button>
+          )}
+          {hasCheckedIn && !hasCheckedOut && (
+            <Button className="w-full" size="lg" variant="danger" onClick={() => checkOut(employeeId)}>
+              <LogOut className="h-4 w-4" /> Check Out
+            </Button>
+          )}
+          {hasCheckedIn && hasCheckedOut && (
+            <div className="flex items-center justify-center gap-2 rounded-xl bg-emerald-50 py-2.5 text-sm font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+              <Clock className="h-4 w-4" /> Day complete &middot; {record?.hoursWorked.toFixed(1)}h logged
+            </div>
+          )}
+        </div>
+      </div>
+    </Card>
+  )
+}
