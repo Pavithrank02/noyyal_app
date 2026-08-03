@@ -1,16 +1,17 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { AttendanceRecord, AttendanceStatus, StatusReport } from '@/types'
-import { employees } from '@/lib/seed'
-import { generateSeedData } from '@/lib/seed'
+import type { AttendanceRecord, AttendanceStatus, Employee, StatusReport } from '@/types'
 import { todayISO } from '@/lib/utils'
 
+const avatarPalette = ['#6366f1', '#06b6d4', '#f97316', '#22c55e', '#eab308', '#ec4899', '#8b5cf6', '#0ea5e9']
+
 interface DataState {
+  employees: Employee[]
   attendance: AttendanceRecord[]
   reports: StatusReport[]
 
-  getEmployee: (id: string) => (typeof employees)[number] | undefined
-  getTeam: (managerId: string) => typeof employees
+  getEmployee: (id: string) => Employee | undefined
+  getTeam: (managerId: string) => Employee[]
   getTodayRecord: (employeeId: string) => AttendanceRecord | undefined
   getAttendanceForEmployee: (employeeId: string) => AttendanceRecord[]
   getAttendanceForDate: (date: string) => AttendanceRecord[]
@@ -18,25 +19,26 @@ interface DataState {
   getReportsForDate: (date: string) => StatusReport[]
   getReportForEmployeeDate: (employeeId: string, date: string) => StatusReport | undefined
 
+  verifyLogin: (email: string, password: string) => Employee | undefined
+  addEmployee: (data: Omit<Employee, 'id' | 'color'>) => Employee
+  updateEmployee: (id: string, patch: Partial<Omit<Employee, 'id'>>) => void
+  removeEmployee: (id: string) => void
+
   checkIn: (employeeId: string) => void
   checkOut: (employeeId: string) => void
   setManualStatus: (employeeId: string, date: string, status: AttendanceStatus) => void
   submitReport: (report: Omit<StatusReport, 'id' | 'submittedAt'>) => void
-  resetDemoData: () => void
-}
-
-function seedIfEmpty() {
-  const { attendance, reports } = generateSeedData()
-  return { attendance, reports }
 }
 
 export const useDataStore = create<DataState>()(
   persist(
     (set, get) => ({
-      ...seedIfEmpty(),
+      employees: [],
+      attendance: [],
+      reports: [],
 
-      getEmployee: (id) => employees.find((e) => e.id === id),
-      getTeam: (managerId) => employees.filter((e) => e.managerId === managerId),
+      getEmployee: (id) => get().employees.find((e) => e.id === id),
+      getTeam: (managerId) => get().employees.filter((e) => e.managerId === managerId),
 
       getTodayRecord: (employeeId) => {
         const date = todayISO()
@@ -55,6 +57,35 @@ export const useDataStore = create<DataState>()(
       getReportsForDate: (date) => get().reports.filter((r) => r.date === date),
       getReportForEmployeeDate: (employeeId, date) =>
         get().reports.find((r) => r.employeeId === employeeId && r.date === date),
+
+      verifyLogin: (email, password) =>
+        get().employees.find(
+          (e) => e.email.toLowerCase() === email.trim().toLowerCase() && e.password === password,
+        ),
+
+      addEmployee: (data) => {
+        const employee: Employee = {
+          ...data,
+          id: `emp-${Date.now().toString(36)}${Math.floor(Math.random() * 1000)}`,
+          color: avatarPalette[get().employees.length % avatarPalette.length],
+        }
+        set((state) => ({ employees: [...state.employees, employee] }))
+        return employee
+      },
+
+      updateEmployee: (id, patch) => {
+        set((state) => ({
+          employees: state.employees.map((e) => (e.id === id ? { ...e, ...patch } : e)),
+        }))
+      },
+
+      removeEmployee: (id) => {
+        set((state) => ({
+          employees: state.employees.filter((e) => e.id !== id),
+          attendance: state.attendance.filter((a) => a.employeeId !== id),
+          reports: state.reports.filter((r) => r.employeeId !== id),
+        }))
+      },
 
       checkIn: (employeeId) => {
         const date = todayISO()
@@ -124,11 +155,7 @@ export const useDataStore = create<DataState>()(
           return { reports: [...withoutExisting, newReport] }
         })
       },
-
-      resetDemoData: () => set(seedIfEmpty()),
     }),
     { name: 'noyyal-data-store' },
   ),
 )
-
-export { employees }
