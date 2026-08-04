@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Login } from '@/pages/Login'
 import { MyAttendance } from '@/pages/employee/MyAttendance'
@@ -8,8 +9,27 @@ import { Team } from '@/pages/manager/Team'
 import { EmployeeDetail } from '@/pages/manager/EmployeeDetail'
 import { ProtectedRoute } from '@/routes/ProtectedRoute'
 import { RoleDashboard } from '@/routes/RoleDashboard'
+import { FullScreenLoader } from '@/components/ui/FullScreenLoader'
+import { useAuthStore } from '@/store/useAuthStore'
+import { useDataStore } from '@/store/useDataStore'
 
 export default function App() {
+  const authStatus = useAuthStore((s) => s.status)
+  const init = useAuthStore((s) => s.init)
+  const fetchAll = useDataStore((s) => s.fetchAll)
+  const reset = useDataStore((s) => s.reset)
+
+  useEffect(() => {
+    init()
+  }, [init])
+
+  useEffect(() => {
+    if (authStatus === 'authenticated') fetchAll()
+    else if (authStatus === 'unauthenticated') reset()
+  }, [authStatus, fetchAll, reset])
+
+  if (authStatus === 'loading') return <FullScreenLoader />
+
   return (
     <BrowserRouter>
       <Routes>

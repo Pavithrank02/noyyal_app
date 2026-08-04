@@ -30,6 +30,7 @@ export function StatusReportForm({ employeeId }: { employeeId: string }) {
   const [workMode, setWorkMode] = useState<WorkMode>(existing?.workMode ?? 'office')
   const [mood, setMood] = useState<Mood>(existing?.mood ?? 'steady')
   const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState('')
 
   function updateTask(i: number, value: string) {
     setTasks((prev) => prev.map((t, idx) => (idx === i ? value : t)))
@@ -39,20 +40,25 @@ export function StatusReportForm({ employeeId }: { employeeId: string }) {
     setTasks((prev) => prev.filter((_, idx) => idx !== i))
   }
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    submitReport({
-      employeeId,
-      date,
-      summary,
-      tasksCompleted: tasks.map((t) => t.trim()).filter(Boolean),
-      blockers,
-      hoursWorked,
-      workMode,
-      mood,
-    })
-    setSubmitted(true)
-    setTimeout(() => setSubmitted(false), 2500)
+    setError('')
+    try {
+      await submitReport({
+        employeeId,
+        date,
+        summary,
+        tasksCompleted: tasks.map((t) => t.trim()).filter(Boolean),
+        blockers,
+        hoursWorked,
+        workMode,
+        mood,
+      })
+      setSubmitted(true)
+      setTimeout(() => setSubmitted(false), 2500)
+    } catch (err) {
+      setError((err as Error).message)
+    }
   }
 
   return (
@@ -60,6 +66,7 @@ export function StatusReportForm({ employeeId }: { employeeId: string }) {
       <CardHeader>
         <CardTitle>{existing ? "Update today's status report" : "Submit today's status report"}</CardTitle>
         {submitted && <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">Saved ✓</span>}
+        {error && <span className="text-xs font-medium text-rose-500">{error}</span>}
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-5">
