@@ -1,22 +1,10 @@
 import { NavLink } from 'react-router-dom'
-import { CalendarCheck2, LayoutDashboard, LogOut, NotebookPen, Users } from 'lucide-react'
+import { LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { employeeNav, managerNav } from '@/lib/nav'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useDataStore } from '@/store/useDataStore'
 import { Avatar } from '@/components/ui/Avatar'
-
-const employeeNav = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/attendance', label: 'My Attendance', icon: CalendarCheck2 },
-  { to: '/reports', label: 'My Reports', icon: NotebookPen },
-]
-
-const managerNav = [
-  { to: '/', label: 'Overview', icon: LayoutDashboard, end: true },
-  { to: '/team-attendance', label: 'Team Attendance', icon: CalendarCheck2 },
-  { to: '/team-reports', label: 'Team Reports', icon: NotebookPen },
-  { to: '/team', label: 'Team', icon: Users },
-]
 
 export function Sidebar() {
   const currentEmployeeId = useAuthStore((s) => s.currentEmployeeId)
@@ -25,7 +13,7 @@ export function Sidebar() {
   const nav = employee?.role === 'manager' ? managerNav : employeeNav
 
   return (
-    <aside className="flex h-screen w-64 shrink-0 flex-col border-r border-slate-200/70 bg-white dark:border-slate-800/70 dark:bg-slate-900">
+    <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-slate-200/70 bg-white dark:border-slate-800/70 dark:bg-slate-900 lg:flex">
       <div className="flex items-center gap-2.5 px-6 py-6">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-accent-400 font-bold text-white shadow-glow">
           N
