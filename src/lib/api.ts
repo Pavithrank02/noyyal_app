@@ -1,7 +1,9 @@
-const API_URL = import.meta.env.VITE_API_URL as string
-
+// Relative paths only — Netlify (prod) and Vite's dev server (local) both
+// proxy /auth and /api to the backend, so the browser always sees a single
+// same-site origin. This matters: Safari blocks third-party cookies by
+// default, which would silently break auth if the API were a separate domain.
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await fetch(path, {
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     ...options,

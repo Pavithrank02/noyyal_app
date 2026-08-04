@@ -16,5 +16,11 @@ export default defineConfig({
       // which crashes Vite's fs watcher with EBUSY if it's left in the project root.
       ignored: ['**/*.zip'],
     },
+    // Mirrors the Netlify redirect proxy in netlify.toml, so local dev also
+    // hits the API same-origin (relative /auth, /api paths in src/lib/api.ts).
+    proxy: {
+      '/auth': { target: 'http://localhost:4000', changeOrigin: true },
+      '/api': { target: 'http://localhost:4000', changeOrigin: true },
+    },
   },
 })

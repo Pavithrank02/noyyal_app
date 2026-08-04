@@ -8,10 +8,13 @@ export function signToken(employeeId) {
 }
 
 export function setAuthCookie(res, token) {
+  // The browser only ever talks to one origin (Netlify proxies /auth and /api
+  // to this server — see netlify.toml), so this is always a same-site cookie.
+  // That matters: Safari blocks third-party (cross-site) cookies by default.
   res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    sameSite: 'lax',
     maxAge: 30 * 24 * 60 * 60 * 1000,
   })
 }
