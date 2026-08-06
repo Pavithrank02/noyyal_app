@@ -41,9 +41,9 @@ export function Login() {
   const login = useAuthStore((s) => s.login)
   const navigate = useNavigate()
 
-  const [mode, setMode] = useState<'login' | 'signup'>('login')
+  const [mode, setMode] = useState<'login' | 'setup'>('login')
   const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
+  const [employeeId, setEmployeeId] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -55,10 +55,10 @@ export function Login() {
     setError('')
     setSubmitting(true)
     try {
-      if (mode === 'signup') {
-        await signUp(name.trim(), email.trim(), password)
+      if (mode === 'setup') {
+        await signUp(name.trim(), employeeId.trim(), password)
       } else {
-        await login(email.trim(), password)
+        await login(employeeId.trim(), password)
       }
       navigate('/', { replace: true })
     } catch (err) {
@@ -70,48 +70,22 @@ export function Login() {
 
   return (
     <Shell>
-      <div className="mb-4 flex gap-1 rounded-lg bg-slate-100 p-1 dark:bg-slate-800">
-        <button
-          type="button"
-          onClick={() => setMode('login')}
-          className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-            mode === 'login'
-              ? 'bg-white text-slate-800 shadow-sm dark:bg-slate-700 dark:text-white'
-              : 'text-slate-500 dark:text-slate-400'
-          }`}
-        >
-          Log in
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode('signup')}
-          className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-            mode === 'signup'
-              ? 'bg-white text-slate-800 shadow-sm dark:bg-slate-700 dark:text-white'
-              : 'text-slate-500 dark:text-slate-400'
-          }`}
-        >
-          Sign up
-        </button>
-      </div>
-
       <p className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
-        <ShieldCheck className="h-3.5 w-3.5" /> {mode === 'login' ? 'Welcome back' : 'Create your account'}
+        <ShieldCheck className="h-3.5 w-3.5" /> {mode === 'login' ? 'Sign in' : 'First-time admin setup'}
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-3">
-        {mode === 'signup' && (
+        {mode === 'setup' && (
           <div>
-            <label className={labelClass}>Name</label>
+            <label className={labelClass}>Your name</label>
             <input value={name} onChange={(e) => setName(e.target.value)} required className={inputClass} />
           </div>
         )}
         <div>
-          <label className={labelClass}>Email</label>
+          <label className={labelClass}>Employee ID</label>
           <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={employeeId}
+            onChange={(e) => setEmployeeId(e.target.value)}
             required
             autoFocus
             className={inputClass}
@@ -130,14 +104,26 @@ export function Login() {
         </div>
         {error && <p className="text-xs font-medium text-rose-500">{error}</p>}
         <Button type="submit" className="w-full" size="lg" disabled={submitting}>
-          {submitting ? 'Please wait…' : mode === 'login' ? 'Log in' : 'Create account'}
+          {submitting ? 'Please wait…' : mode === 'login' ? 'Log in' : 'Create admin account'}
         </Button>
       </form>
 
-      {mode === 'signup' && (
+      <button
+        type="button"
+        onClick={() => {
+          setMode(mode === 'login' ? 'setup' : 'login')
+          setError('')
+        }}
+        className="mt-4 w-full text-center text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+      >
+        {mode === 'login'
+          ? "Setting this up for the first time? Create the admin account"
+          : 'Already have an account? Log in instead'}
+      </button>
+
+      {mode === 'login' && (
         <p className="mt-4 text-center text-xs text-slate-400">
-          The first person to sign up becomes the workspace manager. Everyone after that is added to a team from
-          the Team page.
+          Don&apos;t have an employee ID? Ask your admin to create your account from the Team page.
         </p>
       )}
     </Shell>

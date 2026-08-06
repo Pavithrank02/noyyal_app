@@ -21,6 +21,15 @@ interface DataState {
   getReportsForDate: (date: string) => StatusReport[]
   getReportForEmployeeDate: (employeeId: string, date: string) => StatusReport | undefined
 
+  addEmployee: (data: {
+    employeeId: string
+    name: string
+    password: string
+    department?: string
+    title?: string
+    role?: 'employee' | 'manager'
+    managerId?: string
+  }) => Promise<void>
   updateEmployee: (id: string, patch: Partial<Pick<Employee, 'name' | 'department' | 'title' | 'role' | 'managerId'>>) => Promise<void>
   removeEmployee: (id: string) => Promise<void>
 
@@ -68,6 +77,11 @@ export const useDataStore = create<DataState>()((set, get) => ({
   getReportsForDate: (date) => get().reports.filter((r) => r.date === date),
   getReportForEmployeeDate: (employeeId, date) =>
     get().reports.find((r) => r.employeeId === employeeId && r.date === date),
+
+  addEmployee: async (data) => {
+    const employee = await api.post<Employee>('/api/employees', data)
+    set((state) => ({ employees: [...state.employees, employee] }))
+  },
 
   updateEmployee: async (id, patch) => {
     const updated = await api.patch<Employee>(`/api/employees/${id}`, patch)

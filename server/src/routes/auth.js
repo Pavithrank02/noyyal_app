@@ -6,25 +6,28 @@ import { COOKIE_NAME, requireAuth, setAuthCookie, signToken } from '../middlewar
 
 export const authRouter = Router()
 
+// One-time bootstrap: creates the first (admin/manager) account. Every
+// employee after that is created by a manager via POST /api/employees,
+// not self-signup, so this route refuses once any employee exists.
 authRouter.post('/signup', async (req, res) => {
-  const { name, email, password } = req.body
-  if (!name?.trim() || !email?.trim() || !password || password.length < 4) {
-    return res.status(400).json({ error: 'Name, email, and a password of at least 4 characters are required.' })
+  const employeeCount = await Employee.countDocuments()
+  if (employeeCount > 0) {
+    return res.status(403).json({ error: 'Setup already complete. Ask your admin to create your account.' })
   }
 
-  const existing = await Employee.findOne({ email: email.trim().toLowerCase() })
-  if (existing) return res.status(409).json({ error: 'An account with this email already exists.' })
+  const { name, employeeId, password } = req.body
+  if (!name?.trim() || !employeeId?.trim() || !password || password.length < 4) {
+    return res.status(400).json({ error: 'Name, employee ID, and a password of at least 4 characters are required.' })
+  }
 
-  const employeeCount = await Employee.countDocuments()
   const passwordHash = await bcrypt.hash(password, 10)
-
   const employee = await Employee.create({
     name: name.trim(),
-    email: email.trim().toLowerCase(),
+    employeeId: employeeId.trim(),
     passwordHash,
-    role: employeeCount === 0 ? 'manager' : 'employee',
+    role: 'manager',
     managerId: null,
-    color: nextColor(employeeCount),
+    color: nextColor(0),
   })
 
   setAuthCookie(res, signToken(employee.id))
@@ -32,10 +35,10 @@ authRouter.post('/signup', async (req, res) => {
 })
 
 authRouter.post('/login', async (req, res) => {
-  const { email, password } = req.body
-  const employee = await Employee.findOne({ email: email?.trim().toLowerCase() })
+  const { employeeId, password } = req.body
+  const employee = await Employee.findOne({ employeeId: employeeId?.trim() })
   if (!employee || !(await bcrypt.compare(password ?? '', employee.passwordHash))) {
-    return res.status(401).json({ error: 'Incorrect email or password.' })
+    return res.status(401).json({ error: 'Incorrect employee ID or password.' })
   }
   setAuthCookie(res, signToken(employee.id))
   res.json(employee)

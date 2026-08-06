@@ -2,8 +2,8 @@ export type Role = 'employee' | 'manager'
 
 export interface Employee {
   id: string
+  employeeId: string
   name: string
-  email: string
   role: Role
   department: string
   title: string

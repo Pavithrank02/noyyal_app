@@ -8,8 +8,8 @@ interface AuthState {
   error: string | null
 
   init: () => Promise<void>
-  signUp: (name: string, email: string, password: string) => Promise<void>
-  login: (email: string, password: string) => Promise<void>
+  signUp: (name: string, employeeId: string, password: string) => Promise<void>
+  login: (employeeId: string, password: string) => Promise<void>
   logout: () => Promise<void>
 }
 
@@ -27,10 +27,10 @@ export const useAuthStore = create<AuthState>()((set) => ({
     }
   },
 
-  signUp: async (name, email, password) => {
+  signUp: async (name, employeeId, password) => {
     set({ error: null })
     try {
-      const employee = await api.post<Employee>('/auth/signup', { name, email, password })
+      const employee = await api.post<Employee>('/auth/signup', { name, employeeId, password })
       set({ currentEmployeeId: employee.id, status: 'authenticated' })
     } catch (err) {
       set({ error: (err as Error).message })
@@ -38,10 +38,10 @@ export const useAuthStore = create<AuthState>()((set) => ({
     }
   },
 
-  login: async (email, password) => {
+  login: async (employeeId, password) => {
     set({ error: null })
     try {
-      const employee = await api.post<Employee>('/auth/login', { email, password })
+      const employee = await api.post<Employee>('/auth/login', { employeeId, password })
       set({ currentEmployeeId: employee.id, status: 'authenticated' })
     } catch (err) {
       set({ error: (err as Error).message })
