@@ -8,6 +8,7 @@ import { authRouter } from './routes/auth.js'
 import { employeesRouter } from './routes/employees.js'
 import { attendanceRouter } from './routes/attendance.js'
 import { reportsRouter } from './routes/reports.js'
+import { leaveRequestsRouter } from './routes/leaveRequests.js'
 
 const requiredEnv = ['MONGODB_URI', 'JWT_SECRET', 'CLIENT_ORIGIN']
 for (const key of requiredEnv) {
@@ -27,6 +28,7 @@ app.use('/auth', authRouter)
 app.use('/api/employees', employeesRouter)
 app.use('/api/attendance', attendanceRouter)
 app.use('/api/reports', reportsRouter)
+app.use('/api/leave-requests', leaveRequestsRouter)
 
 app.use((err, _req, res, _next) => {
   console.error(err)

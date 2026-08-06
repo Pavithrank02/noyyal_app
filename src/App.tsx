@@ -3,8 +3,10 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Login } from '@/pages/Login'
 import { MyAttendance } from '@/pages/employee/MyAttendance'
 import { MyReports } from '@/pages/employee/MyReports'
+import { MyLeave } from '@/pages/employee/MyLeave'
 import { TeamAttendance } from '@/pages/manager/TeamAttendance'
 import { TeamReports } from '@/pages/manager/TeamReports'
+import { TeamLeave } from '@/pages/manager/TeamLeave'
 import { Team } from '@/pages/manager/Team'
 import { EmployeeDetail } from '@/pages/manager/EmployeeDetail'
 import { ProtectedRoute } from '@/routes/ProtectedRoute'
@@ -60,6 +62,14 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/leave"
+          element={
+            <ProtectedRoute requireRole="employee">
+              <MyLeave />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/team-attendance"
@@ -74,6 +84,14 @@ export default function App() {
           element={
             <ProtectedRoute requireRole="manager">
               <TeamReports />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/team-leave"
+          element={
+            <ProtectedRoute requireRole="manager">
+              <TeamLeave />
             </ProtectedRoute>
           }
         />

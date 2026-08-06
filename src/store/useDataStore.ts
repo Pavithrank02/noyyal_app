@@ -1,12 +1,13 @@
 import { create } from 'zustand'
 import { api } from '@/lib/api'
-import type { AttendanceRecord, AttendanceStatus, Employee, StatusReport } from '@/types'
+import type { AttendanceRecord, AttendanceStatus, Employee, LeaveRequest, LeaveStatus, StatusReport } from '@/types'
 import { todayISO } from '@/lib/utils'
 
 interface DataState {
   employees: Employee[]
   attendance: AttendanceRecord[]
   reports: StatusReport[]
+  leaveRequests: LeaveRequest[]
   status: 'idle' | 'loading' | 'ready'
 
   fetchAll: () => Promise<void>
@@ -20,6 +21,8 @@ interface DataState {
   getReportsForEmployee: (employeeId: string) => StatusReport[]
   getReportsForDate: (date: string) => StatusReport[]
   getReportForEmployeeDate: (employeeId: string, date: string) => StatusReport | undefined
+  getLeaveRequestsForEmployee: (employeeId: string) => LeaveRequest[]
+  getLeaveRequestsForTeam: (managerId: string) => LeaveRequest[]
 
   addEmployee: (data: {
     employeeId: string
@@ -37,25 +40,30 @@ interface DataState {
   checkOut: (employeeId: string) => Promise<void>
   setManualStatus: (employeeId: string, date: string, status: AttendanceStatus) => Promise<void>
   submitReport: (report: Omit<StatusReport, 'id' | 'submittedAt'>) => Promise<void>
+
+  submitLeaveRequest: (data: { startDate: string; endDate: string; reason: string }) => Promise<void>
+  decideLeaveRequest: (id: string, status: Extract<LeaveStatus, 'approved' | 'rejected'>) => Promise<void>
 }
 
 export const useDataStore = create<DataState>()((set, get) => ({
   employees: [],
   attendance: [],
   reports: [],
+  leaveRequests: [],
   status: 'idle',
 
   fetchAll: async () => {
     set({ status: 'loading' })
-    const [employees, attendance, reports] = await Promise.all([
+    const [employees, attendance, reports, leaveRequests] = await Promise.all([
       api.get<Employee[]>('/api/employees'),
       api.get<AttendanceRecord[]>('/api/attendance'),
       api.get<StatusReport[]>('/api/reports'),
+      api.get<LeaveRequest[]>('/api/leave-requests'),
     ])
-    set({ employees, attendance, reports, status: 'ready' })
+    set({ employees, attendance, reports, leaveRequests, status: 'ready' })
   },
 
-  reset: () => set({ employees: [], attendance: [], reports: [], status: 'idle' }),
+  reset: () => set({ employees: [], attendance: [], reports: [], leaveRequests: [], status: 'idle' }),
 
   getEmployee: (id) => get().employees.find((e) => e.id === id),
   getTeam: (managerId) => get().employees.filter((e) => e.managerId === managerId),
@@ -77,6 +85,16 @@ export const useDataStore = create<DataState>()((set, get) => ({
   getReportsForDate: (date) => get().reports.filter((r) => r.date === date),
   getReportForEmployeeDate: (employeeId, date) =>
     get().reports.find((r) => r.employeeId === employeeId && r.date === date),
+  getLeaveRequestsForEmployee: (employeeId) =>
+    get()
+      .leaveRequests.filter((r) => r.employeeId === employeeId)
+      .sort((a, b) => b.requestedAt.localeCompare(a.requestedAt)),
+  getLeaveRequestsForTeam: (managerId) => {
+    const teamIds = new Set(get().employees.filter((e) => e.managerId === managerId).map((e) => e.id))
+    return get()
+      .leaveRequests.filter((r) => teamIds.has(r.employeeId))
+      .sort((a, b) => b.requestedAt.localeCompare(a.requestedAt))
+  },
 
   addEmployee: async (data) => {
     const employee = await api.post<Employee>('/api/employees', data)
@@ -129,5 +147,19 @@ export const useDataStore = create<DataState>()((set, get) => ({
         ? state.reports.map((r) => (r.id === saved.id ? saved : r))
         : [...state.reports, saved],
     }))
+  },
+
+  submitLeaveRequest: async (data) => {
+    const request = await api.post<LeaveRequest>('/api/leave-requests', data)
+    set((state) => ({ leaveRequests: [request, ...state.leaveRequests] }))
+  },
+
+  decideLeaveRequest: async (id, status) => {
+    const updated = await api.patch<LeaveRequest>(`/api/leave-requests/${id}`, { status })
+    set((state) => ({ leaveRequests: state.leaveRequests.map((r) => (r.id === id ? updated : r)) }))
+    if (status === 'approved') {
+      const attendance = await api.get<AttendanceRecord[]>('/api/attendance')
+      set({ attendance })
+    }
   },
 }))

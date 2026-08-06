@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
-import type { AttendanceStatus, Mood } from '@/types'
+import type { AttendanceStatus, LeaveStatus, Mood } from '@/types'
 
 const statusStyles: Record<AttendanceStatus, string> = {
   present: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/20',
@@ -42,6 +42,31 @@ const moodLabels: Record<Mood, { label: string; className: string }> = {
 export function MoodBadge({ mood }: { mood: Mood }) {
   const m = moodLabels[mood]
   return <span className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium', m.className)}>{m.label}</span>
+}
+
+const leaveStatusStyles: Record<LeaveStatus, string> = {
+  pending: 'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/20',
+  approved: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/20',
+  rejected: 'bg-rose-50 text-rose-700 ring-rose-600/20 dark:bg-rose-500/10 dark:text-rose-400 dark:ring-rose-500/20',
+}
+
+const leaveStatusLabels: Record<LeaveStatus, string> = {
+  pending: 'Pending',
+  approved: 'Approved',
+  rejected: 'Rejected',
+}
+
+export function LeaveStatusBadge({ status }: { status: LeaveStatus }) {
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset',
+        leaveStatusStyles[status],
+      )}
+    >
+      {leaveStatusLabels[status]}
+    </span>
+  )
 }
 
 export function Chip({ children, className }: { children: ReactNode; className?: string }) {

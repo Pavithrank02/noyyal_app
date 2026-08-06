@@ -38,3 +38,17 @@ export interface StatusReport {
   mood: Mood
   submittedAt: string // ISO timestamp
 }
+
+export type LeaveStatus = 'pending' | 'approved' | 'rejected'
+
+export interface LeaveRequest {
+  id: string
+  employeeId: string
+  startDate: string // YYYY-MM-DD
+  endDate: string // YYYY-MM-DD
+  reason: string
+  status: LeaveStatus
+  requestedAt: string // ISO timestamp
+  decidedAt: string | null // ISO timestamp
+  decidedBy: string | null
+}
