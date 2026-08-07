@@ -1,13 +1,14 @@
 import { create } from 'zustand'
 import { api } from '@/lib/api'
-import type { AttendanceRecord, AttendanceStatus, Employee, LeaveRequest, LeaveStatus, StatusReport } from '@/types'
-import { todayISO } from '@/lib/utils'
+import type { AttendanceRecord, AttendanceStatus, Employee, Holiday, LeaveRequest, LeaveStatus, StatusReport } from '@/types'
+import { isSunday, todayISO } from '@/lib/utils'
 
 interface DataState {
   employees: Employee[]
   attendance: AttendanceRecord[]
   reports: StatusReport[]
   leaveRequests: LeaveRequest[]
+  holidays: Holiday[]
   status: 'idle' | 'loading' | 'ready'
 
   fetchAll: () => Promise<void>
@@ -23,6 +24,8 @@ interface DataState {
   getReportForEmployeeDate: (employeeId: string, date: string) => StatusReport | undefined
   getLeaveRequestsForEmployee: (employeeId: string) => LeaveRequest[]
   getLeaveRequestsForTeam: (managerId: string) => LeaveRequest[]
+  isHoliday: (date: string) => boolean
+  getHolidayName: (date: string) => string | undefined
 
   addEmployee: (data: {
     employeeId: string
@@ -46,6 +49,9 @@ interface DataState {
   submitLeaveRequest: (data: { startDate: string; endDate: string; reason: string }) => Promise<void>
   decideLeaveRequest: (id: string, status: Extract<LeaveStatus, 'approved' | 'rejected'>) => Promise<void>
   deleteLeaveRequest: (id: string) => Promise<void>
+
+  addHoliday: (data: { date: string; name: string }) => Promise<void>
+  removeHoliday: (id: string) => Promise<void>
 }
 
 export const useDataStore = create<DataState>()((set, get) => ({
@@ -53,20 +59,22 @@ export const useDataStore = create<DataState>()((set, get) => ({
   attendance: [],
   reports: [],
   leaveRequests: [],
+  holidays: [],
   status: 'idle',
 
   fetchAll: async () => {
     set({ status: 'loading' })
-    const [employees, attendance, reports, leaveRequests] = await Promise.all([
+    const [employees, attendance, reports, leaveRequests, holidays] = await Promise.all([
       api.get<Employee[]>('/api/employees'),
       api.get<AttendanceRecord[]>('/api/attendance'),
       api.get<StatusReport[]>('/api/reports'),
       api.get<LeaveRequest[]>('/api/leave-requests'),
+      api.get<Holiday[]>('/api/holidays'),
     ])
-    set({ employees, attendance, reports, leaveRequests, status: 'ready' })
+    set({ employees, attendance, reports, leaveRequests, holidays, status: 'ready' })
   },
 
-  reset: () => set({ employees: [], attendance: [], reports: [], leaveRequests: [], status: 'idle' }),
+  reset: () => set({ employees: [], attendance: [], reports: [], leaveRequests: [], holidays: [], status: 'idle' }),
 
   getEmployee: (id) => get().employees.find((e) => e.id === id),
   getTeam: (managerId) => get().employees.filter((e) => e.managerId === managerId),
@@ -97,6 +105,11 @@ export const useDataStore = create<DataState>()((set, get) => ({
     return get()
       .leaveRequests.filter((r) => teamIds.has(r.employeeId))
       .sort((a, b) => b.requestedAt.localeCompare(a.requestedAt))
+  },
+  isHoliday: (date) => isSunday(date) || get().holidays.some((h) => h.date === date),
+  getHolidayName: (date) => {
+    if (isSunday(date)) return 'Sunday'
+    return get().holidays.find((h) => h.date === date)?.name
   },
 
   addEmployee: async (data) => {
@@ -186,5 +199,15 @@ export const useDataStore = create<DataState>()((set, get) => ({
       const attendance = await api.get<AttendanceRecord[]>('/api/attendance')
       set({ attendance })
     }
+  },
+
+  addHoliday: async (data) => {
+    const holiday = await api.post<Holiday>('/api/holidays', data)
+    set((state) => ({ holidays: [...state.holidays, holiday].sort((a, b) => a.date.localeCompare(b.date)) }))
+  },
+
+  removeHoliday: async (id) => {
+    await api.delete(`/api/holidays/${id}`)
+    set((state) => ({ holidays: state.holidays.filter((h) => h.id !== id) }))
   },
 }))

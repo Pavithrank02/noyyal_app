@@ -3,6 +3,7 @@ import { LeaveRequest } from '../models/LeaveRequest.js'
 import { Attendance } from '../models/Attendance.js'
 import { Employee } from '../models/Employee.js'
 import { getVisibleEmployeeIds } from '../lib/scope.js'
+import { filterOutHolidays } from '../lib/holidays.js'
 import { requireAuth, requireRole } from '../middleware/auth.js'
 
 export const leaveRequestsRouter = Router()
@@ -20,9 +21,11 @@ function datesBetween(start, end) {
   return dates
 }
 
-// Marks each day in the range as 'leave'. Used when a request becomes approved.
+// Marks each working day in the range as 'leave' (Sundays/holidays are
+// skipped — no point spending a leave day on a day off you already had).
+// Used when a request becomes approved.
 async function markAttendanceAsLeave(employeeId, startDate, endDate) {
-  const dates = datesBetween(startDate, endDate)
+  const dates = await filterOutHolidays(datesBetween(startDate, endDate))
   await Promise.all(
     dates.map((date) =>
       Attendance.findOneAndUpdate(

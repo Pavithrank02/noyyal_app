@@ -52,3 +52,10 @@ export interface LeaveRequest {
   decidedAt: string | null // ISO timestamp
   decidedBy: string | null
 }
+
+export interface Holiday {
+  id: string
+  date: string // YYYY-MM-DD
+  name: string
+  createdBy: string
+}

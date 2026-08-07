@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn, todayISO } from '@/lib/utils'
+import { useDataStore } from '@/store/useDataStore'
 import type { AttendanceRecord } from '@/types'
 
 const statusDot: Record<string, string> = {
@@ -13,6 +14,8 @@ const statusDot: Record<string, string> = {
 }
 
 export function AttendanceCalendar({ records }: { records: AttendanceRecord[] }) {
+  const isHoliday = useDataStore((s) => s.isHoliday)
+  const getHolidayName = useDataStore((s) => s.getHolidayName)
   const [cursor, setCursor] = useState(() => {
     const d = new Date()
     d.setDate(1)
@@ -70,21 +73,39 @@ export function AttendanceCalendar({ records }: { records: AttendanceRecord[] })
         {cells.map((cell, i) => {
           if (!cell) return <div key={i} />
           const record = recordByDate.get(cell.dateStr)
+          // A real attendance record (e.g. someone voluntarily worked a
+          // holiday) always takes priority over the holiday styling.
+          const holiday = !record && isHoliday(cell.dateStr)
           const isToday = cell.dateStr === todayStr
           return (
             <div
               key={i}
-              title={record ? record.status : 'No record'}
+              title={record ? record.status : holiday ? (getHolidayName(cell.dateStr) ?? 'Holiday') : 'No record'}
               className={cn(
                 'relative flex aspect-square items-center justify-center rounded-lg text-xs font-medium',
-                record ? 'bg-slate-50 dark:bg-slate-800/60' : 'text-slate-300 dark:text-slate-700',
+                record
+                  ? 'bg-slate-50 dark:bg-slate-800/60'
+                  : holiday
+                    ? 'bg-indigo-50 dark:bg-indigo-500/10'
+                    : 'text-slate-300 dark:text-slate-700',
                 isToday && 'ring-2 ring-brand-500',
               )}
             >
-              <span className={record ? 'text-slate-700 dark:text-slate-200' : ''}>{cell.day}</span>
+              <span
+                className={cn(
+                  record
+                    ? 'text-slate-700 dark:text-slate-200'
+                    : holiday
+                      ? 'text-indigo-500 dark:text-indigo-400'
+                      : '',
+                )}
+              >
+                {cell.day}
+              </span>
               {record && (
                 <span className={cn('absolute bottom-1 h-1.5 w-1.5 rounded-full', statusDot[record.status])} />
               )}
+              {!record && holiday && <span className="absolute bottom-1 h-1.5 w-1.5 rounded-full bg-indigo-400" />}
             </div>
           )
         })}
@@ -97,6 +118,10 @@ export function AttendanceCalendar({ records }: { records: AttendanceRecord[] })
             <span className="capitalize">{status.replace('-', ' ')}</span>
           </div>
         ))}
+        <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+          <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
+          <span>Holiday</span>
+        </div>
       </div>
     </div>
   )

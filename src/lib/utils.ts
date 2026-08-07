@@ -29,6 +29,10 @@ export function formatDate(dateStr: string): string {
   })
 }
 
+export function isSunday(dateStr: string): boolean {
+  return new Date(`${dateStr}T00:00:00`).getDay() === 0
+}
+
 export function formatHours(hours: number): string {
   return `${hours.toFixed(1)}h`
 }
