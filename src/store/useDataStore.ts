@@ -45,6 +45,7 @@ interface DataState {
 
   submitLeaveRequest: (data: { startDate: string; endDate: string; reason: string }) => Promise<void>
   decideLeaveRequest: (id: string, status: Extract<LeaveStatus, 'approved' | 'rejected'>) => Promise<void>
+  deleteLeaveRequest: (id: string) => Promise<void>
 }
 
 export const useDataStore = create<DataState>()((set, get) => ({
@@ -171,7 +172,17 @@ export const useDataStore = create<DataState>()((set, get) => ({
   decideLeaveRequest: async (id, status) => {
     const updated = await api.patch<LeaveRequest>(`/api/leave-requests/${id}`, { status })
     set((state) => ({ leaveRequests: state.leaveRequests.map((r) => (r.id === id ? updated : r)) }))
-    if (status === 'approved') {
+    // Both approving and un-approving mutate attendance server-side (marking
+    // or reverting 'leave' days), so refresh regardless of the new status.
+    const attendance = await api.get<AttendanceRecord[]>('/api/attendance')
+    set({ attendance })
+  },
+
+  deleteLeaveRequest: async (id) => {
+    const wasApproved = get().leaveRequests.find((r) => r.id === id)?.status === 'approved'
+    await api.delete(`/api/leave-requests/${id}`)
+    set((state) => ({ leaveRequests: state.leaveRequests.filter((r) => r.id !== id) }))
+    if (wasApproved) {
       const attendance = await api.get<AttendanceRecord[]>('/api/attendance')
       set({ attendance })
     }

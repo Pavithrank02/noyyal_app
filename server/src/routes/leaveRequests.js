@@ -19,6 +19,33 @@ function datesBetween(start, end) {
   return dates
 }
 
+// Marks each day in the range as 'leave'. Used when a request becomes approved.
+async function markAttendanceAsLeave(employeeId, startDate, endDate) {
+  const dates = datesBetween(startDate, endDate)
+  await Promise.all(
+    dates.map((date) =>
+      Attendance.findOneAndUpdate(
+        { employeeId, date },
+        { employeeId, date, status: 'leave', checkIn: null, checkOut: null, hoursWorked: 0 },
+        { upsert: true, setDefaultsOnInsert: true },
+      ),
+    ),
+  )
+}
+
+// Removes the auto-created 'leave' attendance records for the range. Only
+// touches records still marked 'leave', so a later manual override elsewhere
+// isn't clobbered. Used when un-approving or deleting an approved request.
+async function revertLeaveAttendance(employeeId, startDate, endDate) {
+  const dates = datesBetween(startDate, endDate)
+  await Attendance.deleteMany({ employeeId, date: { $in: dates }, status: 'leave' })
+}
+
+async function assertOwnsRequest(req, request) {
+  const target = await Employee.findById(request.employeeId)
+  return target && String(target.managerId) === req.employee.id
+}
+
 leaveRequestsRouter.get('/', async (req, res) => {
   const { employeeId } = req.query
   const filter = employeeId ? { employeeId } : {}
@@ -47,6 +74,8 @@ leaveRequestsRouter.post('/', async (req, res) => {
   res.status(201).json(request)
 })
 
+// Managers can decide a pending request, or change their mind later — on both
+// the pending queue and history, this same route re-decides the request.
 leaveRequestsRouter.patch('/:id', requireRole('manager'), async (req, res) => {
   const { status } = req.body
   if (status !== 'approved' && status !== 'rejected') {
@@ -55,30 +84,36 @@ leaveRequestsRouter.patch('/:id', requireRole('manager'), async (req, res) => {
 
   const request = await LeaveRequest.findById(req.params.id)
   if (!request) return res.status(404).json({ error: 'Leave request not found.' })
-  if (request.status !== 'pending') return res.status(409).json({ error: 'This request was already decided.' })
-
-  const target = await Employee.findById(request.employeeId)
-  if (!target || String(target.managerId) !== req.employee.id) {
+  if (!(await assertOwnsRequest(req, request))) {
     return res.status(403).json({ error: 'You can only decide on requests from your own team.' })
   }
 
+  const wasApproved = request.status === 'approved'
   request.status = status
   request.decidedAt = new Date()
   request.decidedBy = req.employee.id
   await request.save()
 
   if (status === 'approved') {
-    const dates = datesBetween(request.startDate, request.endDate)
-    await Promise.all(
-      dates.map((date) =>
-        Attendance.findOneAndUpdate(
-          { employeeId: request.employeeId, date },
-          { employeeId: request.employeeId, date, status: 'leave', checkIn: null, checkOut: null, hoursWorked: 0 },
-          { upsert: true, setDefaultsOnInsert: true },
-        ),
-      ),
-    )
+    await markAttendanceAsLeave(request.employeeId, request.startDate, request.endDate)
+  } else if (wasApproved) {
+    await revertLeaveAttendance(request.employeeId, request.startDate, request.endDate)
   }
 
   res.json(request)
+})
+
+// Only managers can delete leave request history, and only for their own team.
+leaveRequestsRouter.delete('/:id', requireRole('manager'), async (req, res) => {
+  const request = await LeaveRequest.findById(req.params.id)
+  if (!request) return res.status(404).json({ error: 'Leave request not found.' })
+  if (!(await assertOwnsRequest(req, request))) {
+    return res.status(403).json({ error: 'You can only delete requests from your own team.' })
+  }
+
+  if (request.status === 'approved') {
+    await revertLeaveAttendance(request.employeeId, request.startDate, request.endDate)
+  }
+  await request.deleteOne()
+  res.status(204).end()
 })
