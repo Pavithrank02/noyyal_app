@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { StatusReport } from '../models/StatusReport.js'
-import { requireAuth } from '../middleware/auth.js'
+import { Employee } from '../models/Employee.js'
+import { requireAuth, requireRole } from '../middleware/auth.js'
 
 export const reportsRouter = Router()
 
@@ -35,4 +36,18 @@ reportsRouter.post('/', async (req, res) => {
     { upsert: true, new: true, setDefaultsOnInsert: true },
   )
   res.json(report)
+})
+
+// Only managers can delete report data, and only for their own team.
+reportsRouter.delete('/:id', requireRole('manager'), async (req, res) => {
+  const report = await StatusReport.findById(req.params.id)
+  if (!report) return res.status(404).json({ error: 'Report not found.' })
+
+  const target = await Employee.findById(report.employeeId)
+  if (!target || String(target.managerId) !== req.employee.id) {
+    return res.status(403).json({ error: 'You can only delete reports for your own team.' })
+  }
+
+  await report.deleteOne()
+  res.status(204).end()
 })

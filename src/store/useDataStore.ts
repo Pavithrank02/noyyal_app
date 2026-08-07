@@ -40,6 +40,8 @@ interface DataState {
   checkOut: (employeeId: string) => Promise<void>
   setManualStatus: (employeeId: string, date: string, status: AttendanceStatus) => Promise<void>
   submitReport: (report: Omit<StatusReport, 'id' | 'submittedAt'>) => Promise<void>
+  deleteAttendanceRecord: (id: string) => Promise<void>
+  deleteReport: (id: string) => Promise<void>
 
   submitLeaveRequest: (data: { startDate: string; endDate: string; reason: string }) => Promise<void>
   decideLeaveRequest: (id: string, status: Extract<LeaveStatus, 'approved' | 'rejected'>) => Promise<void>
@@ -147,6 +149,16 @@ export const useDataStore = create<DataState>()((set, get) => ({
         ? state.reports.map((r) => (r.id === saved.id ? saved : r))
         : [...state.reports, saved],
     }))
+  },
+
+  deleteAttendanceRecord: async (id) => {
+    await api.delete(`/api/attendance/${id}`)
+    set((state) => ({ attendance: state.attendance.filter((a) => a.id !== id) }))
+  },
+
+  deleteReport: async (id) => {
+    await api.delete(`/api/reports/${id}`)
+    set((state) => ({ reports: state.reports.filter((r) => r.id !== id) }))
   },
 
   submitLeaveRequest: async (data) => {

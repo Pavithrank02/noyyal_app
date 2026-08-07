@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { Attendance } from '../models/Attendance.js'
 import { Employee } from '../models/Employee.js'
-import { requireAuth } from '../middleware/auth.js'
+import { requireAuth, requireRole } from '../middleware/auth.js'
 
 export const attendanceRouter = Router()
 
@@ -71,4 +71,18 @@ attendanceRouter.patch('/manual', async (req, res) => {
     { upsert: true, new: true, setDefaultsOnInsert: true },
   )
   res.json(record)
+})
+
+// Only managers can delete attendance data, and only for their own team.
+attendanceRouter.delete('/:id', requireRole('manager'), async (req, res) => {
+  const record = await Attendance.findById(req.params.id)
+  if (!record) return res.status(404).json({ error: 'Attendance record not found.' })
+
+  const target = await Employee.findById(record.employeeId)
+  if (!target || String(target.managerId) !== req.employee.id) {
+    return res.status(403).json({ error: 'You can only delete records for your own team.' })
+  }
+
+  await record.deleteOne()
+  res.status(204).end()
 })

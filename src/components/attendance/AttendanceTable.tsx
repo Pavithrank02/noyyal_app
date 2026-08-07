@@ -1,3 +1,4 @@
+import { Trash2 } from 'lucide-react'
 import type { AttendanceRecord } from '@/types'
 import { StatusBadge } from '@/components/ui/Badge'
 import { formatDate, formatHours, formatTime } from '@/lib/utils'
@@ -6,10 +7,12 @@ export function AttendanceTable({
   records,
   showEmployee,
   employeeNames,
+  onDelete,
 }: {
   records: AttendanceRecord[]
   showEmployee?: boolean
   employeeNames?: Record<string, string>
+  onDelete?: (id: string) => void
 }) {
   if (records.length === 0) {
     return <p className="py-10 text-center text-sm text-slate-400">No attendance records found.</p>
@@ -27,6 +30,7 @@ export function AttendanceTable({
             <th className="hidden py-2.5 pr-4 font-medium sm:table-cell">Check-in</th>
             <th className="hidden py-2.5 pr-4 font-medium sm:table-cell">Check-out</th>
             <th className="py-2.5 pr-4 font-medium">Hours</th>
+            {onDelete && <th className="py-2.5 pl-2 font-medium" />}
           </tr>
         </thead>
         <tbody>
@@ -50,6 +54,17 @@ export function AttendanceTable({
               <td className="py-2.5 pr-4 font-medium text-slate-700 dark:text-slate-200">
                 {r.hoursWorked ? formatHours(r.hoursWorked) : '—'}
               </td>
+              {onDelete && (
+                <td className="py-2.5 pl-2 text-right">
+                  <button
+                    onClick={() => onDelete(r.id)}
+                    aria-label="Delete record"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-300 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-500/10"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

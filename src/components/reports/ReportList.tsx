@@ -1,4 +1,4 @@
-import { AlertTriangle, Clock3, Laptop } from 'lucide-react'
+import { AlertTriangle, Clock3, Laptop, Trash2 } from 'lucide-react'
 import type { StatusReport } from '@/types'
 import { Card } from '@/components/ui/Card'
 import { MoodBadge, Chip } from '@/components/ui/Badge'
@@ -6,7 +6,15 @@ import { Avatar } from '@/components/ui/Avatar'
 import { formatDate, formatHours } from '@/lib/utils'
 import { useDataStore } from '@/store/useDataStore'
 
-export function ReportList({ reports, showEmployee }: { reports: StatusReport[]; showEmployee?: boolean }) {
+export function ReportList({
+  reports,
+  showEmployee,
+  onDelete,
+}: {
+  reports: StatusReport[]
+  showEmployee?: boolean
+  onDelete?: (id: string) => void
+}) {
   const getEmployee = useDataStore((s) => s.getEmployee)
 
   if (reports.length === 0) {
@@ -29,7 +37,18 @@ export function ReportList({ reports, showEmployee }: { reports: StatusReport[];
                   <p className="text-xs text-slate-400">{formatDate(report.date)}</p>
                 </div>
               </div>
-              <MoodBadge mood={report.mood} />
+              <div className="flex shrink-0 items-center gap-1">
+                <MoodBadge mood={report.mood} />
+                {onDelete && (
+                  <button
+                    onClick={() => onDelete(report.id)}
+                    aria-label="Delete report"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-300 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-500/10"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
 
             <p className="mt-3 text-sm text-slate-700 dark:text-slate-200">{report.summary}</p>
