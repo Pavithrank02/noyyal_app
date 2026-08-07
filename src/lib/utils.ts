@@ -37,6 +37,15 @@ export function formatHours(hours: number): string {
   return `${hours.toFixed(1)}h`
 }
 
+// HH:MM:SS elapsed between two instants, floored at zero.
+export function formatDuration(fromIso: string, toMs: number): string {
+  const totalSeconds = Math.max(0, Math.floor((toMs - new Date(fromIso).getTime()) / 1000))
+  const h = Math.floor(totalSeconds / 3600)
+  const m = Math.floor((totalSeconds % 3600) / 60)
+  const s = totalSeconds % 60
+  return [h, m, s].map((n) => String(n).padStart(2, '0')).join(':')
+}
+
 export function initials(name: string): string {
   return name
     .split(' ')

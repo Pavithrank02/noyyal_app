@@ -1,21 +1,26 @@
 import { useState, type FormEvent } from 'react'
-import { Plus, Send, X } from 'lucide-react'
+import { Clock3, Plus, Send, X } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { useDataStore } from '@/store/useDataStore'
-import { todayISO } from '@/lib/utils'
+import { formatHours, todayISO } from '@/lib/utils'
 
 export function StatusReportForm({ employeeId }: { employeeId: string }) {
   const date = todayISO()
   const existing = useDataStore((s) => s.getReportForEmployeeDate(employeeId, date))
+  const todayRecord = useDataStore((s) => s.getTodayRecord(employeeId))
   const submitReport = useDataStore((s) => s.submitReport)
 
   const [summary, setSummary] = useState(existing?.summary ?? '')
   const [tasks, setTasks] = useState<string[]>(existing?.tasksCompleted ?? [''])
   const [blockers, setBlockers] = useState(existing?.blockers ?? '')
-  const [hoursWorked, setHoursWorked] = useState(existing?.hoursWorked ?? 8)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
+
+  // Hours worked is no longer typed in — it's whatever check-in/check-out
+  // has recorded for today, same source as the CheckInCard's live counter.
+  const hoursWorked = todayRecord?.hoursWorked ?? 0
+  const hasCheckedOut = !!todayRecord?.checkOut
 
   function updateTask(i: number, value: string) {
     setTasks((prev) => prev.map((t, idx) => (idx === i ? value : t)))
@@ -105,15 +110,16 @@ export function StatusReportForm({ employeeId }: { employeeId: string }) {
             <label className="mb-1.5 block text-xs font-medium text-slate-500 dark:text-slate-400">
               Hours worked
             </label>
-            <input
-              type="number"
-              min={0}
-              max={16}
-              step={0.5}
-              value={hoursWorked}
-              onChange={(e) => setHoursWorked(Number(e.target.value))}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-base text-slate-800 outline-none transition-colors sm:text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-            />
+            <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800/50">
+              <Clock3 className="h-4 w-4 shrink-0 text-slate-400" />
+              {hasCheckedOut ? (
+                <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  {formatHours(hoursWorked)}
+                </span>
+              ) : (
+                <span className="text-sm text-slate-400">Recorded automatically once you check out</span>
+              )}
+            </div>
           </div>
 
           <div>
