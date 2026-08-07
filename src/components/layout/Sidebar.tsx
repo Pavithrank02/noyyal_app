@@ -1,16 +1,20 @@
+import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { LogOut } from 'lucide-react'
+import { KeyRound, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { employeeNav, managerNav } from '@/lib/nav'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useDataStore } from '@/store/useDataStore'
 import { Avatar } from '@/components/ui/Avatar'
+import { ChangePasswordDialog } from '@/components/ui/ChangePasswordDialog'
 
 export function Sidebar() {
   const currentEmployeeId = useAuthStore((s) => s.currentEmployeeId)
   const logout = useAuthStore((s) => s.logout)
   const employee = useDataStore((s) => (currentEmployeeId ? s.getEmployee(currentEmployeeId) : undefined))
+  const changePassword = useDataStore((s) => s.changePassword)
   const nav = employee?.role === 'manager' ? managerNav : employeeNav
+  const [changingPassword, setChangingPassword] = useState(false)
 
   return (
     <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-slate-200/70 bg-white dark:border-slate-800/70 dark:bg-slate-900 lg:flex">
@@ -51,6 +55,15 @@ export function Sidebar() {
               <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{employee.name}</p>
               <p className="truncate text-xs text-slate-400">{employee.title}</p>
             </div>
+            {employee.role === 'manager' && (
+              <button
+                onClick={() => setChangingPassword(true)}
+                aria-label="Change password"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+              >
+                <KeyRound className="h-4 w-4" />
+              </button>
+            )}
             <button
               onClick={logout}
               aria-label="Log out"
@@ -60,6 +73,18 @@ export function Sidebar() {
             </button>
           </div>
         </div>
+      )}
+
+      {employee && employee.role === 'manager' && (
+        <ChangePasswordDialog
+          open={changingPassword}
+          title="Change my password"
+          onSubmit={async (password) => {
+            await changePassword(employee.id, password)
+            setChangingPassword(false)
+          }}
+          onCancel={() => setChangingPassword(false)}
+        />
       )}
     </aside>
   )

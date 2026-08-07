@@ -1,11 +1,12 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
-import { CalendarCheck, CalendarClock, Clock3, Flame, Pencil } from 'lucide-react'
+import { CalendarCheck, CalendarClock, Clock3, Flame, KeyRound, Pencil } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { Avatar } from '@/components/ui/Avatar'
 import { StatTile } from '@/components/ui/StatTile'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
+import { ChangePasswordDialog } from '@/components/ui/ChangePasswordDialog'
 import { AttendanceCalendar } from '@/components/attendance/AttendanceCalendar'
 import { AttendanceTable } from '@/components/attendance/AttendanceTable'
 import { ReportList } from '@/components/reports/ReportList'
@@ -132,6 +133,8 @@ export function EmployeeDetail() {
   const reports = useDataStore((s) => (employeeId ? s.getReportsForEmployee(employeeId) : []))
   const [tab, setTab] = useState<'attendance' | 'reports'>('attendance')
   const [editing, setEditing] = useState(false)
+  const [changingPassword, setChangingPassword] = useState(false)
+  const changePassword = useDataStore((s) => s.changePassword)
 
   const stats = useMemo(() => {
     const now = new Date()
@@ -168,14 +171,29 @@ export function EmployeeDetail() {
             </p>
           </div>
         </div>
-        {!editing && (
-          <Button size="sm" variant="secondary" onClick={() => setEditing(true)}>
-            <Pencil className="h-3.5 w-3.5" /> Edit
+        <div className="flex shrink-0 gap-2">
+          <Button size="sm" variant="secondary" onClick={() => setChangingPassword(true)}>
+            <KeyRound className="h-3.5 w-3.5" /> Change password
           </Button>
-        )}
+          {!editing && (
+            <Button size="sm" variant="secondary" onClick={() => setEditing(true)}>
+              <Pencil className="h-3.5 w-3.5" /> Edit
+            </Button>
+          )}
+        </div>
       </div>
 
       {editing && <EditProfileForm employee={employee} onDone={() => setEditing(false)} />}
+
+      <ChangePasswordDialog
+        open={changingPassword}
+        title={`Change ${employee.name}'s password`}
+        onSubmit={async (password) => {
+          await changePassword(employee.id, password)
+          setChangingPassword(false)
+        }}
+        onCancel={() => setChangingPassword(false)}
+      />
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
         <StatTile label="Attendance rate (month)" value={`${stats.attendanceRate}%`} icon={CalendarCheck} tone="emerald" />

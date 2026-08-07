@@ -73,6 +73,23 @@ employeesRouter.patch('/:id', requireRole('manager'), async (req, res) => {
   res.json(employee)
 })
 
+// Only managers can change a password — their own, or a direct report's
+// (which can itself be another manager). Employees can't change anyone's
+// password, including their own; they ask their manager to reset it.
+employeesRouter.patch('/:id/password', requireRole('manager'), async (req, res) => {
+  const { password } = req.body
+  if (!password || password.length < 4) {
+    return res.status(400).json({ error: 'Password must be at least 4 characters.' })
+  }
+
+  const isSelf = req.params.id === req.employee.id
+  if (!isSelf && !(await assertManagesEmployee(req, res, req.params.id))) return
+
+  const passwordHash = await bcrypt.hash(password, 10)
+  await Employee.findByIdAndUpdate(req.params.id, { passwordHash })
+  res.status(204).end()
+})
+
 employeesRouter.delete('/:id', requireRole('manager'), async (req, res) => {
   if (!(await assertManagesEmployee(req, res, req.params.id))) return
 

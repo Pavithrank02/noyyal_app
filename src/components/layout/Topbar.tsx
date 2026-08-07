@@ -1,6 +1,8 @@
-import { LogOut } from 'lucide-react'
+import { useState } from 'react'
+import { KeyRound, LogOut } from 'lucide-react'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { Avatar } from '@/components/ui/Avatar'
+import { ChangePasswordDialog } from '@/components/ui/ChangePasswordDialog'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useDataStore } from '@/store/useDataStore'
 
@@ -8,6 +10,8 @@ export function Topbar({ title, subtitle }: { title: string; subtitle?: string }
   const currentEmployeeId = useAuthStore((s) => s.currentEmployeeId)
   const logout = useAuthStore((s) => s.logout)
   const employee = useDataStore((s) => (currentEmployeeId ? s.getEmployee(currentEmployeeId) : undefined))
+  const changePassword = useDataStore((s) => s.changePassword)
+  const [changingPassword, setChangingPassword] = useState(false)
 
   const today = new Date().toLocaleDateString(undefined, {
     weekday: 'long',
@@ -29,6 +33,15 @@ export function Topbar({ title, subtitle }: { title: string; subtitle?: string }
         {employee && (
           <div className="flex items-center gap-1.5 lg:hidden">
             <Avatar name={employee.name} color={employee.color} size="sm" />
+            {employee.role === 'manager' && (
+              <button
+                onClick={() => setChangingPassword(true)}
+                aria-label="Change password"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+              >
+                <KeyRound className="h-4 w-4" />
+              </button>
+            )}
             <button
               onClick={logout}
               aria-label="Log out"
@@ -39,6 +52,18 @@ export function Topbar({ title, subtitle }: { title: string; subtitle?: string }
           </div>
         )}
       </div>
+
+      {employee && employee.role === 'manager' && (
+        <ChangePasswordDialog
+          open={changingPassword}
+          title="Change my password"
+          onSubmit={async (password) => {
+            await changePassword(employee.id, password)
+            setChangingPassword(false)
+          }}
+          onCancel={() => setChangingPassword(false)}
+        />
+      )}
     </header>
   )
 }

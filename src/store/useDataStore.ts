@@ -38,6 +38,7 @@ interface DataState {
   }) => Promise<void>
   updateEmployee: (id: string, patch: Partial<Pick<Employee, 'name' | 'department' | 'title' | 'role' | 'managerId'>>) => Promise<void>
   removeEmployee: (id: string) => Promise<void>
+  changePassword: (id: string, password: string) => Promise<void>
 
   checkIn: (employeeId: string) => Promise<void>
   checkOut: (employeeId: string) => Promise<void>
@@ -129,6 +130,10 @@ export const useDataStore = create<DataState>()((set, get) => ({
       attendance: state.attendance.filter((a) => a.employeeId !== id),
       reports: state.reports.filter((r) => r.employeeId !== id),
     }))
+  },
+
+  changePassword: async (id, password) => {
+    await api.patch(`/api/employees/${id}/password`, { password })
   },
 
   checkIn: async (_employeeId) => {
