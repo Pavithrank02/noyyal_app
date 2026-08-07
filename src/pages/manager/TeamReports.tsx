@@ -3,6 +3,7 @@ import { Download } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { ReportList } from '@/components/reports/ReportList'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useDataStore } from '@/store/useDataStore'
@@ -16,6 +17,7 @@ export function TeamReports() {
   const deleteReport = useDataStore((s) => s.deleteReport)
 
   const [selectedEmployee, setSelectedEmployee] = useState<string>('all')
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const teamIds = useMemo(() => new Set(team.map((t) => t.id)), [team])
   const employeeNames = useMemo(() => Object.fromEntries(team.map((t) => [t.id, t.name])), [team])
@@ -43,8 +45,10 @@ export function TeamReports() {
     )
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm('Delete this status report? This cannot be undone.')) return
+  async function confirmDelete() {
+    if (!deletingId) return
+    const id = deletingId
+    setDeletingId(null)
     await deleteReport(id)
   }
 
@@ -72,9 +76,19 @@ export function TeamReports() {
           </div>
         </CardHeader>
         <CardContent>
-          <ReportList reports={filtered.slice(0, 30)} showEmployee onDelete={handleDelete} />
+          <ReportList reports={filtered.slice(0, 30)} showEmployee onDelete={setDeletingId} />
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={deletingId !== null}
+        title="Delete this status report?"
+        message="This cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeletingId(null)}
+      />
     </AppShell>
   )
 }

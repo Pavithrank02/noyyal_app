@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
 import { LeaveStatusBadge } from '@/components/ui/Badge'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useDataStore } from '@/store/useDataStore'
 import { formatDate } from '@/lib/utils'
@@ -74,6 +75,7 @@ export function TeamLeave() {
   const decideLeaveRequest = useDataStore((s) => s.decideLeaveRequest)
   const deleteLeaveRequest = useDataStore((s) => s.deleteLeaveRequest)
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const pending = requests.filter((r) => r.status === 'pending')
   const decided = requests.filter((r) => r.status !== 'pending')
@@ -87,8 +89,10 @@ export function TeamLeave() {
     }
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm('Delete this leave request? This cannot be undone.')) return
+  async function confirmDelete() {
+    if (!deletingId) return
+    const id = deletingId
+    setDeletingId(null)
     setBusyId(id)
     try {
       await deleteLeaveRequest(id)
@@ -111,7 +115,7 @@ export function TeamLeave() {
               request={r}
               busy={busyId === r.id}
               onDecide={(status) => handleDecide(r.id, status)}
-              onDelete={() => handleDelete(r.id)}
+              onDelete={() => setDeletingId(r.id)}
             />
           ))}
         </CardContent>
@@ -129,11 +133,21 @@ export function TeamLeave() {
               request={r}
               busy={busyId === r.id}
               onDecide={(status) => handleDecide(r.id, status)}
-              onDelete={() => handleDelete(r.id)}
+              onDelete={() => setDeletingId(r.id)}
             />
           ))}
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={deletingId !== null}
+        title="Delete this leave request?"
+        message="This cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeletingId(null)}
+      />
     </AppShell>
   )
 }

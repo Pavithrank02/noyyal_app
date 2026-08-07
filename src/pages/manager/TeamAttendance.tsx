@@ -3,6 +3,7 @@ import { Download } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { AttendanceTable } from '@/components/attendance/AttendanceTable'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useDataStore } from '@/store/useDataStore'
@@ -17,6 +18,7 @@ export function TeamAttendance() {
 
   const [selectedEmployee, setSelectedEmployee] = useState<string>('all')
   const [date, setDate] = useState(todayISO())
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const teamIds = useMemo(() => new Set(team.map((t) => t.id)), [team])
   const employeeNames = useMemo(() => Object.fromEntries(team.map((t) => [t.id, t.name])), [team])
@@ -49,8 +51,10 @@ export function TeamAttendance() {
     )
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm('Delete this attendance record? This cannot be undone.')) return
+  async function confirmDelete() {
+    if (!deletingId) return
+    const id = deletingId
+    setDeletingId(null)
     await deleteAttendanceRecord(id)
   }
 
@@ -67,7 +71,7 @@ export function TeamAttendance() {
           />
         </CardHeader>
         <CardContent>
-          <AttendanceTable records={dayRecords} showEmployee employeeNames={employeeNames} onDelete={handleDelete} />
+          <AttendanceTable records={dayRecords} showEmployee employeeNames={employeeNames} onDelete={setDeletingId} />
         </CardContent>
       </Card>
 
@@ -97,10 +101,20 @@ export function TeamAttendance() {
             records={historyRecords}
             showEmployee
             employeeNames={employeeNames}
-            onDelete={handleDelete}
+            onDelete={setDeletingId}
           />
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={deletingId !== null}
+        title="Delete this attendance record?"
+        message="This cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeletingId(null)}
+      />
     </AppShell>
   )
 }

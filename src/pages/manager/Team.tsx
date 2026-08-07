@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card'
 import { Avatar } from '@/components/ui/Avatar'
 import { StatusBadge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useAuthStore } from '@/store/useAuthStore'
 import { useDataStore } from '@/store/useDataStore'
 import type { Role } from '@/types'
@@ -124,9 +125,12 @@ export function Team() {
   const getTodayRecord = useDataStore((s) => s.getTodayRecord)
   const removeEmployee = useDataStore((s) => s.removeEmployee)
   const [showAdd, setShowAdd] = useState(false)
+  const [removing, setRemoving] = useState<{ id: string; name: string } | null>(null)
 
-  async function handleRemove(id: string, name: string) {
-    if (!confirm(`Remove ${name} from your team?`)) return
+  async function confirmRemove() {
+    if (!removing) return
+    const { id } = removing
+    setRemoving(null)
     await removeEmployee(id)
   }
 
@@ -151,7 +155,7 @@ export function Team() {
                 <button
                   onClick={(e) => {
                     e.preventDefault()
-                    handleRemove(member.id, member.name)
+                    setRemoving({ id: member.id, name: member.name })
                   }}
                   aria-label={`Remove ${member.name}`}
                   className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-lg text-slate-300 opacity-0 transition-opacity hover:bg-rose-50 hover:text-rose-500 group-hover:opacity-100 dark:hover:bg-rose-500/10"
@@ -185,6 +189,16 @@ export function Team() {
           </p>
         )}
       </div>
+
+      <ConfirmDialog
+        open={removing !== null}
+        title={`Remove ${removing?.name ?? 'this teammate'}?`}
+        message="They'll lose access and their attendance/report history will be removed too."
+        confirmLabel="Remove"
+        variant="danger"
+        onConfirm={confirmRemove}
+        onCancel={() => setRemoving(null)}
+      />
     </AppShell>
   )
 }
