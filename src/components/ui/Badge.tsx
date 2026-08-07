@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
-import type { AttendanceStatus, LeaveStatus, Mood } from '@/types'
+import type { AttendanceStatus, LeaveStatus } from '@/types'
 
 const statusStyles: Record<AttendanceStatus, string> = {
   present: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/20',
@@ -31,17 +31,6 @@ export function StatusBadge({ status }: { status: AttendanceStatus }) {
       {statusLabels[status]}
     </span>
   )
-}
-
-const moodLabels: Record<Mood, { label: string; className: string }> = {
-  great: { label: 'Great', className: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' },
-  steady: { label: 'Steady', className: 'bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400' },
-  stretched: { label: 'Stretched', className: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400' },
-}
-
-export function MoodBadge({ mood }: { mood: Mood }) {
-  const m = moodLabels[mood]
-  return <span className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium', m.className)}>{m.label}</span>
 }
 
 const leaveStatusStyles: Record<LeaveStatus, string> = {

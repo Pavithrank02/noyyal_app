@@ -39,8 +39,6 @@ export function TeamReports() {
         'Tasks completed': r.tasksCompleted.join('; '),
         Blockers: r.blockers,
         Hours: r.hoursWorked,
-        'Work mode': r.workMode,
-        Mood: r.mood,
       })),
     )
   }

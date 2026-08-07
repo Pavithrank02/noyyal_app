@@ -7,8 +7,6 @@ const statusReportSchema = new mongoose.Schema({
   tasksCompleted: { type: [String], default: [] },
   blockers: { type: String, default: '' },
   hoursWorked: { type: Number, default: 0 },
-  workMode: { type: String, enum: ['office', 'wfh', 'hybrid'], required: true },
-  mood: { type: String, enum: ['great', 'steady', 'stretched'], required: true },
   submittedAt: { type: Date, default: Date.now },
 })
 

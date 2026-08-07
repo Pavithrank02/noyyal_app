@@ -26,9 +26,9 @@ reportsRouter.get('/', async (req, res) => {
 })
 
 reportsRouter.post('/', async (req, res) => {
-  const { date, summary, tasksCompleted, blockers, hoursWorked, workMode, mood } = req.body
-  if (!date || !summary || !workMode || !mood) {
-    return res.status(400).json({ error: 'date, summary, workMode, and mood are required.' })
+  const { date, summary, tasksCompleted, blockers, hoursWorked } = req.body
+  if (!date || !summary) {
+    return res.status(400).json({ error: 'date and summary are required.' })
   }
 
   const report = await StatusReport.findOneAndUpdate(
@@ -40,8 +40,6 @@ reportsRouter.post('/', async (req, res) => {
       tasksCompleted: tasksCompleted ?? [],
       blockers: blockers ?? '',
       hoursWorked: hoursWorked ?? 0,
-      workMode,
-      mood,
       submittedAt: new Date(),
     },
     { upsert: true, new: true, setDefaultsOnInsert: true },

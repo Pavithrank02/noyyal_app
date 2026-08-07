@@ -23,9 +23,6 @@ export interface AttendanceRecord {
   hoursWorked: number
 }
 
-export type WorkMode = 'office' | 'wfh' | 'hybrid'
-export type Mood = 'great' | 'steady' | 'stretched'
-
 export interface StatusReport {
   id: string
   employeeId: string
@@ -34,8 +31,6 @@ export interface StatusReport {
   tasksCompleted: string[]
   blockers: string
   hoursWorked: number
-  workMode: WorkMode
-  mood: Mood
   submittedAt: string // ISO timestamp
 }
 
