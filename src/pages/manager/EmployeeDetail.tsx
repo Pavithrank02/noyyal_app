@@ -1,6 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
-import { CalendarCheck, Clock3, Flame, Pencil } from 'lucide-react'
+import { CalendarCheck, CalendarClock, Clock3, Flame, Pencil } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { Avatar } from '@/components/ui/Avatar'
 import { StatTile } from '@/components/ui/StatTile'
@@ -10,11 +10,71 @@ import { AttendanceCalendar } from '@/components/attendance/AttendanceCalendar'
 import { AttendanceTable } from '@/components/attendance/AttendanceTable'
 import { ReportList } from '@/components/reports/ReportList'
 import { useDataStore } from '@/store/useDataStore'
-import type { Employee, Role } from '@/types'
+import { todayISO } from '@/lib/utils'
+import type { AttendanceStatus, Employee, Role } from '@/types'
 
 const inputClass =
   'w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-base text-slate-800 outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 sm:text-sm'
 const labelClass = 'mb-1.5 block text-xs font-medium text-slate-500 dark:text-slate-400'
+
+const statusOptions: { value: AttendanceStatus; label: string }[] = [
+  { value: 'present', label: 'Present' },
+  { value: 'half-day', label: 'Half Day' },
+  { value: 'late', label: 'Late' },
+  { value: 'wfh', label: 'WFH' },
+  { value: 'leave', label: 'On Leave' },
+  { value: 'absent', label: 'Absent' },
+]
+
+function SetStatusForm({ employeeId }: { employeeId: string }) {
+  const setManualStatus = useDataStore((s) => s.setManualStatus)
+  const [date, setDate] = useState(todayISO())
+  const [status, setStatus] = useState<AttendanceStatus>('half-day')
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    setSaving(true)
+    try {
+      await setManualStatus(employeeId, date, status)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Set attendance status</CardTitle>
+        {saved && <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">Saved ✓</span>}
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="flex-1">
+            <label className={labelClass}>Date</label>
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputClass} />
+          </div>
+          <div className="flex-1">
+            <label className={labelClass}>Status</label>
+            <select value={status} onChange={(e) => setStatus(e.target.value as AttendanceStatus)} className={inputClass}>
+              {statusOptions.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <Button type="submit" disabled={saving} className="sm:w-auto">
+            <CalendarClock className="h-4 w-4" /> {saving ? 'Saving…' : 'Set status'}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  )
+}
 
 function EditProfileForm({ employee, onDone }: { employee: Employee; onDone: () => void }) {
   const updateEmployee = useDataStore((s) => s.updateEmployee)
@@ -121,6 +181,10 @@ export function EmployeeDetail() {
         <StatTile label="Attendance rate (month)" value={`${stats.attendanceRate}%`} icon={CalendarCheck} tone="emerald" />
         <StatTile label="Avg hours / day" value={`${stats.avgHours.toFixed(1)}h`} icon={Clock3} tone="brand" />
         <StatTile label="Current streak" value={`${stats.streak} days`} icon={Flame} tone="amber" />
+      </div>
+
+      <div className="mt-6">
+        <SetStatusForm employeeId={employeeId} />
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-5">
