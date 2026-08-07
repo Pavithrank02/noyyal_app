@@ -22,9 +22,7 @@ function Shell({ children }: { children: ReactNode }) {
 
       <div className="relative w-full max-w-md animate-fade-in">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-accent-400 text-2xl font-bold text-white shadow-glow">
-            N
-          </div>
+          <img src="/logo-icon.png" alt="Noyyal" className="mx-auto mb-4 h-14 w-14 object-contain" />
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Noyyal</h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Attendance &amp; work status reporting, made effortless.

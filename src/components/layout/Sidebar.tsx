@@ -15,9 +15,7 @@ export function Sidebar() {
   return (
     <aside className="hidden h-screen w-64 shrink-0 flex-col border-r border-slate-200/70 bg-white dark:border-slate-800/70 dark:bg-slate-900 lg:flex">
       <div className="flex items-center gap-2.5 px-6 py-6">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-accent-400 font-bold text-white shadow-glow">
-          N
-        </div>
+        <img src="/logo-icon.png" alt="Noyyal" className="h-9 w-9 shrink-0 object-contain" />
         <div>
           <p className="text-sm font-bold leading-tight text-slate-900 dark:text-white">Noyyal</p>
           <p className="text-[11px] leading-tight text-slate-400">Attendance &amp; Status</p>
