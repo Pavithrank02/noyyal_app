@@ -4,14 +4,17 @@ import { Employee } from '../models/Employee.js'
 import { Attendance } from '../models/Attendance.js'
 import { StatusReport } from '../models/StatusReport.js'
 import { nextColor } from '../lib/colors.js'
+import { getVisibleEmployeeIds } from '../lib/scope.js'
 import { requireAuth, requireRole } from '../middleware/auth.js'
 
 export const employeesRouter = Router()
 
 employeesRouter.use(requireAuth)
 
-employeesRouter.get('/', async (_req, res) => {
-  const employees = await Employee.find()
+// Employees see only themselves; managers see themselves + their direct team.
+employeesRouter.get('/', async (req, res) => {
+  const visibleIds = await getVisibleEmployeeIds(req.employee)
+  const employees = await Employee.find({ _id: { $in: visibleIds } })
   res.json(employees)
 })
 
@@ -41,7 +44,23 @@ employeesRouter.post('/', requireRole('manager'), async (req, res) => {
   res.status(201).json(employee)
 })
 
+// A manager can only edit/remove their own direct reports, not anyone company-wide.
+async function assertManagesEmployee(req, res, id) {
+  const target = await Employee.findById(id)
+  if (!target) {
+    res.status(404).json({ error: 'Employee not found.' })
+    return null
+  }
+  if (String(target.managerId) !== req.employee.id) {
+    res.status(403).json({ error: 'You can only manage your own team.' })
+    return null
+  }
+  return target
+}
+
 employeesRouter.patch('/:id', requireRole('manager'), async (req, res) => {
+  if (!(await assertManagesEmployee(req, res, req.params.id))) return
+
   const { name, department, title, role, managerId } = req.body
   const patch = {}
   if (name !== undefined) patch.name = name
@@ -51,13 +70,13 @@ employeesRouter.patch('/:id', requireRole('manager'), async (req, res) => {
   if (managerId !== undefined) patch.managerId = managerId
 
   const employee = await Employee.findByIdAndUpdate(req.params.id, patch, { new: true })
-  if (!employee) return res.status(404).json({ error: 'Employee not found.' })
   res.json(employee)
 })
 
 employeesRouter.delete('/:id', requireRole('manager'), async (req, res) => {
-  const employee = await Employee.findByIdAndDelete(req.params.id)
-  if (!employee) return res.status(404).json({ error: 'Employee not found.' })
+  if (!(await assertManagesEmployee(req, res, req.params.id))) return
+
+  await Employee.findByIdAndDelete(req.params.id)
   await Promise.all([
     Attendance.deleteMany({ employeeId: req.params.id }),
     StatusReport.deleteMany({ employeeId: req.params.id }),

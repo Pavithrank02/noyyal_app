@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { LeaveRequest } from '../models/LeaveRequest.js'
 import { Attendance } from '../models/Attendance.js'
 import { Employee } from '../models/Employee.js'
+import { getVisibleEmployeeIds } from '../lib/scope.js'
 import { requireAuth, requireRole } from '../middleware/auth.js'
 
 export const leaveRequestsRouter = Router()
@@ -46,10 +47,20 @@ async function assertOwnsRequest(req, request) {
   return target && String(target.managerId) === req.employee.id
 }
 
+// Employees only see their own requests; managers see their own + their team's.
 leaveRequestsRouter.get('/', async (req, res) => {
+  const visibleIds = await getVisibleEmployeeIds(req.employee)
   const { employeeId } = req.query
-  const filter = employeeId ? { employeeId } : {}
-  const requests = await LeaveRequest.find(filter).sort({ requestedAt: -1 })
+
+  if (employeeId) {
+    if (!visibleIds.includes(employeeId)) {
+      return res.status(403).json({ error: "You can't view that employee's leave requests." })
+    }
+    const requests = await LeaveRequest.find({ employeeId }).sort({ requestedAt: -1 })
+    return res.json(requests)
+  }
+
+  const requests = await LeaveRequest.find({ employeeId: { $in: visibleIds } }).sort({ requestedAt: -1 })
   res.json(requests)
 })
 

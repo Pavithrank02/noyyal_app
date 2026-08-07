@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { Attendance } from '../models/Attendance.js'
 import { Employee } from '../models/Employee.js'
+import { getVisibleEmployeeIds } from '../lib/scope.js'
 import { requireAuth, requireRole } from '../middleware/auth.js'
 
 export const attendanceRouter = Router()
@@ -9,10 +10,20 @@ attendanceRouter.use(requireAuth)
 
 // The caller supplies `date` (their local YYYY-MM-DD) since "today" depends on
 // the user's timezone, not the server's — see src/lib/utils.ts's toDateKey.
+// Employees only see their own records; managers see their own + their team's.
 attendanceRouter.get('/', async (req, res) => {
+  const visibleIds = await getVisibleEmployeeIds(req.employee)
   const { employeeId } = req.query
-  const filter = employeeId ? { employeeId } : {}
-  const records = await Attendance.find(filter).sort({ date: -1 })
+
+  if (employeeId) {
+    if (!visibleIds.includes(employeeId)) {
+      return res.status(403).json({ error: "You can't view that employee's attendance." })
+    }
+    const records = await Attendance.find({ employeeId }).sort({ date: -1 })
+    return res.json(records)
+  }
+
+  const records = await Attendance.find({ employeeId: { $in: visibleIds } }).sort({ date: -1 })
   res.json(records)
 })
 

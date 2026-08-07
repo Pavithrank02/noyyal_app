@@ -1,16 +1,27 @@
 import { Router } from 'express'
 import { StatusReport } from '../models/StatusReport.js'
 import { Employee } from '../models/Employee.js'
+import { getVisibleEmployeeIds } from '../lib/scope.js'
 import { requireAuth, requireRole } from '../middleware/auth.js'
 
 export const reportsRouter = Router()
 
 reportsRouter.use(requireAuth)
 
+// Employees only see their own reports; managers see their own + their team's.
 reportsRouter.get('/', async (req, res) => {
+  const visibleIds = await getVisibleEmployeeIds(req.employee)
   const { employeeId } = req.query
-  const filter = employeeId ? { employeeId } : {}
-  const reports = await StatusReport.find(filter).sort({ date: -1 })
+
+  if (employeeId) {
+    if (!visibleIds.includes(employeeId)) {
+      return res.status(403).json({ error: "You can't view that employee's reports." })
+    }
+    const reports = await StatusReport.find({ employeeId }).sort({ date: -1 })
+    return res.json(reports)
+  }
+
+  const reports = await StatusReport.find({ employeeId: { $in: visibleIds } }).sort({ date: -1 })
   res.json(reports)
 })
 
