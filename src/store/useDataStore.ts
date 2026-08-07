@@ -119,7 +119,9 @@ export const useDataStore = create<DataState>()((set, get) => ({
 
   checkIn: async (_employeeId) => {
     const date = todayISO()
-    const record = await api.post<AttendanceRecord>('/api/attendance/check-in', { date })
+    const now = new Date()
+    const localMinutes = now.getHours() * 60 + now.getMinutes()
+    const record = await api.post<AttendanceRecord>('/api/attendance/check-in', { date, localMinutes })
     set((state) => ({
       attendance: state.attendance.some((a) => a.id === record.id)
         ? state.attendance.map((a) => (a.id === record.id ? record : a))

@@ -17,14 +17,20 @@ attendanceRouter.get('/', async (req, res) => {
 })
 
 attendanceRouter.post('/check-in', async (req, res) => {
-  const { date } = req.body
+  // `localMinutes` is minutes-since-midnight in the employee's own timezone
+  // (computed client-side), not the server's — Render runs in UTC, so
+  // deriving "9:30 AM" from the server's own clock would be wrong for
+  // everyone. Same reasoning as `date` above.
+  const { date, localMinutes } = req.body
   if (!date) return res.status(400).json({ error: 'date is required.' })
 
   const existing = await Attendance.findOne({ employeeId: req.employee.id, date })
   if (existing) return res.json(existing)
 
   const now = new Date()
-  const isLate = now.getHours() > 9 || (now.getHours() === 9 && now.getMinutes() > 15)
+  // 30-minute grace period from 9:00 AM — check in after 9:30 counts as late.
+  const minutesSinceMidnight = typeof localMinutes === 'number' ? localMinutes : now.getHours() * 60 + now.getMinutes()
+  const isLate = minutesSinceMidnight > 9 * 60 + 30
   const record = await Attendance.create({
     employeeId: req.employee.id,
     date,

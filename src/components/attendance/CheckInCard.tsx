@@ -20,6 +20,11 @@ export function CheckInCard({ employeeId }: { employeeId: string }) {
   const hasCheckedIn = !!record?.checkIn
   const hasCheckedOut = !!record?.checkOut
 
+  function handleCheckOut() {
+    if (!confirm('Check out now? This will log your hours for the day and cannot be undone from here.')) return
+    checkOut(employeeId)
+  }
+
   return (
     <Card className="relative overflow-hidden p-5 sm:p-6">
       <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-gradient-to-br from-brand-500/10 to-accent-400/10 blur-2xl" />
@@ -55,7 +60,7 @@ export function CheckInCard({ employeeId }: { employeeId: string }) {
             </Button>
           )}
           {hasCheckedIn && !hasCheckedOut && (
-            <Button className="w-full" size="lg" variant="danger" onClick={() => checkOut(employeeId)}>
+            <Button className="w-full" size="lg" variant="danger" onClick={handleCheckOut}>
               <LogOut className="h-4 w-4" /> Check Out
             </Button>
           )}
