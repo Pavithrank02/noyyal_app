@@ -3,11 +3,13 @@ import { Clock, LogIn, LogOut } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { StatusBadge } from '@/components/ui/Badge'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useDataStore } from '@/store/useDataStore'
 import { formatTime } from '@/lib/utils'
 
 export function CheckInCard({ employeeId }: { employeeId: string }) {
   const [now, setNow] = useState(new Date())
+  const [confirmingCheckOut, setConfirmingCheckOut] = useState(false)
   const record = useDataStore((s) => s.getTodayRecord(employeeId))
   const checkIn = useDataStore((s) => s.checkIn)
   const checkOut = useDataStore((s) => s.checkOut)
@@ -20,8 +22,8 @@ export function CheckInCard({ employeeId }: { employeeId: string }) {
   const hasCheckedIn = !!record?.checkIn
   const hasCheckedOut = !!record?.checkOut
 
-  function handleCheckOut() {
-    if (!confirm('Check out now? This will log your hours for the day and cannot be undone from here.')) return
+  function confirmCheckOut() {
+    setConfirmingCheckOut(false)
     checkOut(employeeId)
   }
 
@@ -60,7 +62,7 @@ export function CheckInCard({ employeeId }: { employeeId: string }) {
             </Button>
           )}
           {hasCheckedIn && !hasCheckedOut && (
-            <Button className="w-full" size="lg" variant="danger" onClick={handleCheckOut}>
+            <Button className="w-full" size="lg" variant="danger" onClick={() => setConfirmingCheckOut(true)}>
               <LogOut className="h-4 w-4" /> Check Out
             </Button>
           )}
@@ -71,6 +73,16 @@ export function CheckInCard({ employeeId }: { employeeId: string }) {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmingCheckOut}
+        title="Check out now?"
+        message="This will log your hours for the day and cannot be undone from here."
+        confirmLabel="Check Out"
+        variant="danger"
+        onConfirm={confirmCheckOut}
+        onCancel={() => setConfirmingCheckOut(false)}
+      />
     </Card>
   )
 }
