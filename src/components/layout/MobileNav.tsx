@@ -21,12 +21,12 @@ export function MobileNav() {
           end={item.end}
           className={({ isActive }) =>
             cn(
-              'flex flex-1 flex-col items-center justify-center gap-1 py-2.5 text-[11px] font-medium transition-colors',
+              'flex flex-1 flex-col items-center justify-center gap-1 px-0.5 py-2.5 text-center text-[10px] font-medium leading-tight transition-colors',
               isActive ? 'text-brand-600 dark:text-brand-400' : 'text-slate-400 dark:text-slate-500',
             )
           }
         >
-          <item.icon size={20} strokeWidth={2.25} />
+          <item.icon size={19} strokeWidth={2.25} />
           {item.label}
         </NavLink>
       ))}

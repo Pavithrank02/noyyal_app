@@ -23,8 +23,9 @@ export function AttendanceTable({
             {showEmployee && <th className="py-2.5 pr-4 font-medium">Employee</th>}
             <th className="py-2.5 pr-4 font-medium">Date</th>
             <th className="py-2.5 pr-4 font-medium">Status</th>
-            <th className="py-2.5 pr-4 font-medium">Check-in</th>
-            <th className="py-2.5 pr-4 font-medium">Check-out</th>
+            {/* Check-in/out are secondary detail — hidden on phones to avoid a 5-6 column horizontal scroll */}
+            <th className="hidden py-2.5 pr-4 font-medium sm:table-cell">Check-in</th>
+            <th className="hidden py-2.5 pr-4 font-medium sm:table-cell">Check-out</th>
             <th className="py-2.5 pr-4 font-medium">Hours</th>
           </tr>
         </thead>
@@ -40,8 +41,12 @@ export function AttendanceTable({
               <td className="py-2.5 pr-4">
                 <StatusBadge status={r.status} />
               </td>
-              <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400">{formatTime(r.checkIn)}</td>
-              <td className="py-2.5 pr-4 text-slate-500 dark:text-slate-400">{formatTime(r.checkOut)}</td>
+              <td className="hidden py-2.5 pr-4 text-slate-500 dark:text-slate-400 sm:table-cell">
+                {formatTime(r.checkIn)}
+              </td>
+              <td className="hidden py-2.5 pr-4 text-slate-500 dark:text-slate-400 sm:table-cell">
+                {formatTime(r.checkOut)}
+              </td>
               <td className="py-2.5 pr-4 font-medium text-slate-700 dark:text-slate-200">
                 {r.hoursWorked ? formatHours(r.hoursWorked) : '—'}
               </td>

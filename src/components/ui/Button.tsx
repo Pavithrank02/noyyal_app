@@ -20,8 +20,10 @@ const variants: Record<Variant, string> = {
 }
 
 const sizes: Record<Size, string> = {
-  sm: 'px-3 py-1.5 text-xs',
-  md: 'px-4 py-2 text-sm',
+  // min-h keeps a real (~36px+) tap target even at the "sm" text size — small
+  // buttons like Approve/Reject are used on mobile for real actions, not just decoration.
+  sm: 'min-h-[2.25rem] px-3 py-1.5 text-xs',
+  md: 'min-h-[2.5rem] px-4 py-2 text-sm',
   lg: 'px-5 py-2.5 text-sm',
 }
 

@@ -9,7 +9,7 @@ import { useDataStore } from '@/store/useDataStore'
 import { formatDate, todayISO } from '@/lib/utils'
 
 const inputClass =
-  'w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100'
+  'w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-base text-slate-800 outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 sm:text-sm'
 const labelClass = 'mb-1.5 block text-xs font-medium text-slate-500 dark:text-slate-400'
 
 export function MyLeave() {

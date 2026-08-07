@@ -18,7 +18,7 @@ export function ReportList({ reports, showEmployee }: { reports: StatusReport[];
       {reports.map((report) => {
         const employee = getEmployee(report.employeeId)
         return (
-          <Card key={report.id} className="p-5">
+          <Card key={report.id} className="p-4 sm:p-5">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-start gap-3">
                 {showEmployee && employee && <Avatar name={employee.name} color={employee.color} />}

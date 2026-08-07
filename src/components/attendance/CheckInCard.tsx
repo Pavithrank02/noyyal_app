@@ -21,11 +21,11 @@ export function CheckInCard({ employeeId }: { employeeId: string }) {
   const hasCheckedOut = !!record?.checkOut
 
   return (
-    <Card className="relative overflow-hidden p-6">
+    <Card className="relative overflow-hidden p-5 sm:p-6">
       <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-gradient-to-br from-brand-500/10 to-accent-400/10 blur-2xl" />
       <div className="relative flex flex-col items-center text-center">
         <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Current time</p>
-        <p className="mt-1 font-mono text-4xl font-bold tabular-nums text-slate-900 dark:text-white">
+        <p className="mt-1 font-mono text-3xl font-bold tabular-nums text-slate-900 dark:text-white sm:text-4xl">
           {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
         </p>
 

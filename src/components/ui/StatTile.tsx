@@ -20,7 +20,7 @@ const toneStyles = {
 
 export function StatTile({ label, value, icon: Icon, tone = 'brand', hint }: StatTileProps) {
   return (
-    <Card className="animate-fade-in p-5">
+    <Card className="animate-fade-in p-4 sm:p-5">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{label}</p>
