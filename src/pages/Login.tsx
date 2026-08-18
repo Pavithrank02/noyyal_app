@@ -1,5 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { ShieldCheck } from 'lucide-react'
 import { useAuthStore } from '@/store/useAuthStore'
 import { Card } from '@/components/ui/Card'
@@ -107,6 +107,15 @@ export function Login() {
           {submitting ? 'Please wait…' : mode === 'login' ? 'Log in' : 'Create admin account'}
         </Button>
       </form>
+
+      {mode === 'login' && (
+        <Link
+          to="/forgot-password"
+          className="mt-3 block w-full text-center text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+        >
+          Forgot password?
+        </Link>
+      )}
 
       <button
         type="button"

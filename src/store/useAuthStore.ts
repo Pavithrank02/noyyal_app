@@ -11,6 +11,7 @@ interface AuthState {
   signUp: (name: string, employeeId: string, password: string) => Promise<void>
   login: (employeeId: string, password: string) => Promise<void>
   logout: () => Promise<void>
+  resetPassword: (employeeId: string, password: string) => Promise<void>
 }
 
 export const useAuthStore = create<AuthState>()((set) => ({
@@ -52,5 +53,15 @@ export const useAuthStore = create<AuthState>()((set) => ({
   logout: async () => {
     await api.post('/auth/logout')
     set({ currentEmployeeId: null, status: 'unauthenticated' })
+  },
+
+  resetPassword: async (employeeId, password) => {
+    set({ error: null })
+    try {
+      await api.post('/auth/forgot-password', { employeeId, password })
+    } catch (err) {
+      set({ error: (err as Error).message })
+      throw err
+    }
   },
 }))

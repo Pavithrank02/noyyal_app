@@ -44,6 +44,25 @@ authRouter.post('/login', async (req, res) => {
   res.json(employee)
 })
 
+// Self-service reset for the manager/admin account only — a manager has no
+// one above them to ask for a reset the way employees ask their manager
+// (see POST /api/employees/:id/password). No verification step by design.
+authRouter.post('/forgot-password', async (req, res) => {
+  const { employeeId, password } = req.body
+  if (!employeeId?.trim() || !password || password.length < 4) {
+    return res.status(400).json({ error: 'Employee ID and a password of at least 4 characters are required.' })
+  }
+
+  const employee = await Employee.findOne({ employeeId: employeeId.trim(), role: 'manager' })
+  if (!employee) {
+    return res.status(404).json({ error: 'No admin account found with that employee ID.' })
+  }
+
+  employee.passwordHash = await bcrypt.hash(password, 10)
+  await employee.save()
+  res.status(204).end()
+})
+
 authRouter.post('/logout', (_req, res) => {
   res.clearCookie(COOKIE_NAME)
   res.status(204).end()
